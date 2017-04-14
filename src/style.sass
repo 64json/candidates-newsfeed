@@ -1,0 +1,289 @@
+$color-sim: #FFCA08
+$color-ahn: #036242
+$color-moon: #055AAB
+$color-hong: #C9151E
+$color-yoo: #00B3EB
+$bar-height: 2em
+$primary-color: #435E9B
+$light-color: #5B73A8
+$dark-color: #2B3C62
+
+@font-face
+  font-family: NotoSansKR
+  src: url(../font/NotoSansKR-Regular.otf)
+
+html, body
+  margin: 0
+  padding: 0
+  width: 100%
+  height: 100%
+
+body
+  font-family: NotoSansKR, serif
+
+#root
+  display: flex
+  width: 100%
+  height: 100%
+
+.container
+  flex: 1
+  display: flex
+  flex-direction: column
+  align-content: stretch
+  width: 100%
+  height: 100%
+
+.header
+  background-color: $primary-color
+  display: flex
+  flex-direction: column
+  align-items: center
+  padding: 2em
+  color: white
+  border-bottom: $bar-height solid #314571
+  box-shadow: (inset 0 -1px $dark-color, inset 0 -2px $light-color)
+
+  .bluehouse
+    margin-top: .5em
+    width: 100%
+    height: 5em
+    background: url(../img/bluehouse.png) no-repeat center
+    background-size: contain
+
+  .title-primary
+    margin-top: .5em
+    font-size: 1.4em
+
+  .title-secondary
+    font-size: 1em
+
+  .title-tertiary
+    font-size: .7em
+    position: relative
+    margin-top: .2em
+    z-index: 1
+
+    &:before
+      border-top: 1px solid #dfdfdf
+      content: ''
+      margin: 0 auto
+      position: absolute
+      top: 50%
+      left: -2em
+      right: -2em
+      bottom: 0
+      z-index: -1
+
+    span
+      background-color: $primary-color
+      padding: 0 0 0 .5em
+      letter-spacing: .5em
+
+.content
+  display: flex
+  width: 100%
+  height: 100%
+
+.side-container
+  flex: 1
+  display: flex
+  flex-direction: column
+  max-width: 20em
+
+.candidate-container
+  display: flex
+  flex-direction: column
+  width: 100%
+  height: 100%
+
+  .candidate
+    flex: 1
+    display: flex
+    align-items: center
+    justify-content: space-between
+    padding-left: 5%
+    padding-right: 10%
+    cursor: pointer
+    filter: grayscale(100%)
+    transition: filter .2s ease-in-out
+
+    &:hover
+      filter: grayscale(80%)
+
+    .picture
+      height: 100%
+      background: no-repeat left bottom
+      background-size: auto 95%
+
+    .description
+      display: flex
+      flex-direction: column
+      align-items: flex-end
+
+      .name
+        font-size: 2em
+        color: black
+
+  .toggle-candidate
+    display: none
+
+    &:checked + .candidate
+      filter: none
+
+  .candidate-sim
+    background-color: $color-sim
+
+    .picture
+      flex: 1
+      display: flex
+      background-image: url(../img/candidate/sim.png)
+
+  .candidate-ahn
+    background-color: $color-ahn
+
+    .picture
+      flex: 1
+      display: flex
+      background-image: url(../img/candidate/ahn.png)
+
+  .candidate-moon
+    background-color: $color-moon
+
+    .picture
+      flex: 1
+      display: flex
+      background-image: url(../img/candidate/moon.png)
+
+  .candidate-hong
+    background-color: $color-hong
+
+    .picture
+      flex: 1
+      display: flex
+      background-image: url(../img/candidate/hong.png)
+
+  .candidate-yoo
+    background-color: $color-yoo
+
+    .picture
+      flex: 1
+      display: flex
+      background-image: url(../img/candidate/yoo.png)
+
+.main-container
+  flex: 2
+  flex-direction: column
+
+.option-container
+  margin-top: -$bar-height
+  height: $bar-height
+  display: flex
+  align-items: stretch
+
+  .toggle-option
+    display: none
+
+    &:checked + .option
+      background: $light-color
+      color: white
+
+  .option
+    flex: 1
+    padding: 0 1em
+    color: black
+    line-height: $bar-height
+    text-align: center
+    margin-top: -1px
+    cursor: pointer
+
+.bar-container
+  margin-top: -$bar-height
+  height: $bar-height
+  display: flex
+  align-items: stretch
+
+  .bar
+    flex: 1
+    line-height: $bar-height
+    text-align: center
+    cursor: pointer
+
+  .bar-sim
+    background-color: $color-sim
+
+  .bar-ahn
+    background-color: $color-ahn
+
+  .bar-moon
+    background-color: $color-moon
+
+  .bar-hong
+    background-color: $color-hong
+
+  .bar-yoo
+    background-color: $color-yoo
+
+.result-message
+  height: $bar-height
+  line-height: $bar-height
+  width: 100%
+  background: grey
+  text-align: center
+  color: white
+
+.article-container
+  flex: 1
+  height: 100%
+  display: flex
+  flex-direction: column
+  overflow-y: scroll
+
+  $article-padding: 2em
+
+  .article
+    display: flex
+    align-content: stretch
+    margin: $article-padding $article-padding 0
+    flex-shrink: 0
+    text-decoration: none
+    color: black
+
+    &:last-child
+      padding-bottom: $article-padding
+
+    .picture
+      flex: 1
+      background: no-repeat center
+      background-size: contain
+
+    .picture-default
+      background-size: 40%
+      background-image: url(../img/no-image.png)
+
+    .description
+      margin: .5em 1em
+      flex: 4
+
+      .title
+        margin: 0
+
+      .summary
+        margin: .5em 0
+        overflow: hidden
+        text-overflow: ellipsis
+        display: -webkit-box
+        -webkit-box-orient: vertical
+        -webkit-line-clamp: 4
+        line-height: 1.5em
+        max-height: 6em
+
+      .minor
+        display: flex
+        justify-content: flex-end
+
+        .author
+          margin-right: 1em
+
+.github-corner
+  color: white

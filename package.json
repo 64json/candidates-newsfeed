@@ -1,0 +1,44 @@
+{
+  "name": "korea-17-presidential-election",
+  "version": "0.0.0",
+  "description": "list articles regarding South Korea presidential election of 2017",
+  "main": "index.js",
+  "scripts": {
+    "dev": "webpack-dev-server --hot",
+    "build": "webpack -p"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/parkjs814/Korea17PresidentialElection.git"
+  },
+  "keywords": [
+    "South",
+    "Korea",
+    "president",
+    "election",
+    "2017"
+  ],
+  "author": "Jason Park",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/parkjs814/Korea17PresidentialElection/issues"
+  },
+  "homepage": "https://github.com/parkjs814/Korea17PresidentialElection",
+  "dependencies": {
+    "async": "^2.3.0",
+    "babel-core": "^6.24.1",
+    "babel-loader": "^6.4.1",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-react": "^6.24.1",
+    "css-loader": "^0.28.0",
+    "moment": "^2.18.1",
+    "node-sass": "^4.5.2",
+    "react": "^15.5.4",
+    "react-dom": "^15.5.4",
+    "react-hot-loader": "^1.3.1",
+    "sass-loader": "^6.0.3",
+    "style-loader": "^0.16.1",
+    "webpack": "^2.3.3",
+    "webpack-dev-server": "^2.4.2"
+  }
+}
