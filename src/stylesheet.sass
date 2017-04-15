@@ -419,6 +419,8 @@ a
 @media (max-width: 768px)
   .candidate-container
     .candidate
+      padding: 0
+
       .picture
         background-position: center bottom
 
@@ -435,16 +437,15 @@ a
   .side-container
     flex-direction: column
     max-width: none
-    min-height: 10em
+    max-height: 8em
 
   .candidate-container
     flex-direction: row
 
     .candidate
-      padding: 0
-
       .picture
         background-size: cover
+        background-position: center top
 
   .bar-container
     .bar

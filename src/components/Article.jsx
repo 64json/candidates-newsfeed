@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Article = ({ media_title, media_image, author, link, summary, image, title, pubdate }) => (
+const Article = ({ media_title, author, link, summary, image, title, pubdate }) => (
   <a className="article" href={link} target="_blank">
     <div className={`picture ${image ? '' : 'picture-default'}`}
          style={image && { backgroundImage: `url(${image})` }} />

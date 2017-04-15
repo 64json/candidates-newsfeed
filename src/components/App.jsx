@@ -4,7 +4,16 @@ import moment from 'moment';
 import '../stylesheet.sass';
 import candidates from '../data/candidates';
 import defaultMedia from '../data/media';
-import { stripTags, loadMedia, saveMedia, resetMedia, getResultMessage, loadSetting, saveSetting } from '../utils.js';
+import {
+  stripTags,
+  loadMedia,
+  saveMedia,
+  resetMedia,
+  getResultMessage,
+  loadSetting,
+  saveSetting,
+  fetchRSS
+} from '../utils.js';
 import Article from './Article.jsx';
 import Candidate from './Candidate.jsx';
 import Countdown from './Countdown.jsx';
@@ -46,6 +55,7 @@ class App extends React.Component {
     this.handleChangeCondition = this.handleChangeCondition.bind(this);
     this.handleChangeNewMedium = this.handleChangeNewMedium.bind(this);
     this.handleResetMedia = this.handleResetMedia.bind(this);
+    this.fixMediumEncoding = this.fixMediumEncoding.bind(this);
   }
 
   componentDidMount() {
@@ -54,7 +64,7 @@ class App extends React.Component {
     const header = document.getElementById('header');
     const articles = document.getElementById('articles');
     articles.addEventListener('scroll', function (e) {
-      header.style['margin-top'] = (-Math.min(articles.scrollTop / 2, header.clientHeight)) + 'px';
+      header.style['margin-top'] = (-Math.min(articles.scrollTop, header.clientHeight)) + 'px';
     });
   }
 
@@ -100,29 +110,29 @@ class App extends React.Component {
     );
   }
 
-  fetchOne([ name, url ], cb) {
+  fetchOne({ name, url, encoding }, cb) {
     const allKeywords = [];
     candidates.forEach(({ keywords }) => allKeywords.push(...keywords));
 
-    feednami.load(url).then(({ meta, entries }) => {
-      let { image: media_image } = meta;
+    fetchRSS(url, encoding, this.fixMediumEncoding, (err, entries) => {
+      if (err) return cb(err);
+
       const media_title = name;
-      media_image = media_image && media_image.url;
 
       this.setState((prevState) => {
         const articles = [...prevState.articles];
         articles.push(...entries.map((article) => {
           let { author, link, summary, image, title, pubdate } = article;
-          if (!this.testKeywords(title, summary, allKeywords)) return null;
 
           const content = stripTags(summary);
           summary = content.text;
           image = image && image.url || content.image;
           pubdate = moment(pubdate);
 
+          if (!this.testKeywords(title, summary, allKeywords)) return null;
+
           return {
             media_title,
-            media_image,
             author,
             link,
             summary,
@@ -200,7 +210,7 @@ class App extends React.Component {
       const media = [...prevState.media];
       const { name, url } = prevState.new_medium;
       if (!name || !url) return {};
-      media.unshift([name, url]);
+      media.unshift({ name, url });
       this.fetch([media[0]]);
       saveMedia(media);
       return { media, new_medium: { name: '', url: '' } };
@@ -210,7 +220,7 @@ class App extends React.Component {
   handleRemoveMedium(i) {
     this.setState((prevState) => {
       const media = [...prevState.media];
-      const [[ name ]] = media.splice(i, 1);
+      const [{ name }] = media.splice(i, 1);
       const articles = prevState.articles.filter(({ media_title }) => media_title !== name);
       saveMedia(media);
       return { media, articles };
@@ -221,6 +231,16 @@ class App extends React.Component {
     resetMedia();
     this.setState({ media: defaultMedia, articles: [] });
     this.fetch(defaultMedia);
+  }
+
+  fixMediumEncoding(url, encoding) {
+    this.setState((prevState) => {
+      const media = [...prevState.media];
+      const medium = media.find(v => v.url === url);
+      medium.encoding = encoding;
+      saveMedia(media);
+      return { media };
+    });
   }
 
   render() {
@@ -255,7 +275,7 @@ class App extends React.Component {
           <span className="action-add" onClick={() => this.handleAddMedium()} />
         </div>
         {
-          this.state.media.map(([name, url], i) =>
+          this.state.media.map(({ name, url }, i) =>
             <div className="media" key={i}>
               <span className="name">{name}</span>
               <span className="url">{url}</span>

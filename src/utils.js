@@ -1,4 +1,8 @@
 import Cookies from 'cookies-js';
+import FeedParser from 'feedparser';
+import hyperquest from 'hyperquest';
+import iconv from 'iconv-lite';
+import { Readable } from 'stream';
 
 export const shuffle = (array) => {
   const randomized = [];
@@ -66,4 +70,38 @@ export const getResultMessage = (selectedArticles, candidates, selected, conditi
   }
   resultMessage += ` 기사 (${articleCount}건)`;
   return resultMessage;
+};
+
+export const fetchRSS = (url, encoding = 'utf-8', fixEncoding, cb) => {
+  let xml = '';
+  const req = hyperquest(url);
+  req.on('error', cb);
+  req.on('data', (chunk) => {
+    xml += encoding !== 'utf-8' ? iconv.decode(chunk, encoding) : chunk;
+  });
+  req.on('end', () => {
+    const readable = new Readable();
+    readable.push(xml);
+    readable.push(null);
+    readable.pipe(feedparser);
+  });
+
+  const entries = [];
+  const feedparser = new FeedParser();
+  feedparser.on('error', cb);
+  feedparser.on('readable', () => {
+    let entry;
+    while (entry = feedparser.read()) {
+      entries.push(entry);
+    }
+  });
+  feedparser.on('end', () => {
+    const { meta } = feedparser;
+    const parsedEncoding = meta['#xml'].encoding || 'utf-8';
+    if (encoding !== parsedEncoding) {
+      fixEncoding(url, parsedEncoding);
+      return fetchRSS(url, parsedEncoding, fixEncoding, cb);
+    }
+    cb(null, entries);
+  });
 };
