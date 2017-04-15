@@ -73,21 +73,26 @@ export const getResultMessage = (selectedArticles, candidates, selected, conditi
 };
 
 export const fetchRSS = (url, encoding = 'utf-8', fixEncoding, cb) => {
-  let xml = '';
+  const feedparser = new FeedParser();
+
   const req = hyperquest(url);
   req.on('error', cb);
-  req.on('data', (chunk) => {
-    xml += encoding !== 'utf-8' ? iconv.decode(chunk, encoding) : chunk;
-  });
-  req.on('end', () => {
-    const readable = new Readable();
-    readable.push(xml);
-    readable.push(null);
-    readable.pipe(feedparser);
-  });
+  if (encoding === 'utf-8') {
+    req.pipe(feedparser);
+  } else {
+    let xml = '';
+    req.on('data', (chunk) => {
+      xml += iconv.decode(chunk, encoding);
+    });
+    req.on('end', () => {
+      const readable = new Readable();
+      readable.push(xml);
+      readable.push(null);
+      readable.pipe(feedparser);
+    });
+  }
 
   const entries = [];
-  const feedparser = new FeedParser();
   feedparser.on('error', cb);
   feedparser.on('readable', () => {
     let entry;
