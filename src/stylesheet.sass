@@ -296,6 +296,8 @@ a
       flex: 1
       background: no-repeat center
       background-size: contain
+      min-width: 10em
+      min-height: 8em
 
     .picture-default
       background-image: url(../img/no-image.png)
@@ -305,10 +307,10 @@ a
       flex: 4
 
       .title
-        margin: 0
+        margin: 0 0 .5em 0
 
       .summary
-        margin: .5em 0
+        margin: 0 0 .5em 0
         overflow: hidden
         text-overflow: ellipsis
         display: -webkit-box
@@ -399,6 +401,17 @@ a
 
       .description
         display: none
+
+  .article-container
+    .article
+      flex-direction: column
+
+      .picture-default
+        display: none
+
+      .description
+        .summary
+          display: none
 
   .main-container
     flex: 4
