@@ -1,10 +1,13 @@
 import React from 'react';
 import async from 'async';
 import moment from 'moment';
-import '../style.sass';
+import '../stylesheet.sass';
 import candidates from '../data/candidates';
-import media from '../data/media';
-import { stripTags } from '../utils.js';
+import defaultMedia from '../data/media';
+import { stripTags, loadMedia, saveMedia, resetMedia, getResultMessage, loadSetting, saveSetting } from '../utils.js';
+import Article from './Article.jsx';
+import Candidate from './Candidate.jsx';
+import Countdown from './Countdown.jsx';
 
 moment.locale('ko');
 
@@ -12,36 +15,111 @@ class App extends React.Component {
   constructor(props) {
     super(props);
 
-    this.state = {
-      selected: candidates.map((v) => true),
-      articles: [],
-      condition_and: false,
-      condition_only: false,
+    const setting = {
+      suffixes: [],
+      condition: {
+        operator: 'or',
+        only: false
+      },
+      ...loadSetting()
     };
 
-    this.onCandidateSelected = this.onCandidateSelected.bind(this);
+    this.state = {
+      selected: candidates.map(({ suffix }) => setting.suffixes.includes(suffix)),
+      condition: setting.condition,
+      articles: [],
+      setup: false,
+      media: loadMedia() || defaultMedia,
+      new_medium: {
+        name: '',
+        url: ''
+      },
+      progress: {
+        current: 0,
+        total: 1
+      }
+    };
+
+    this.handleSelectCandidate = this.handleSelectCandidate.bind(this);
+    this.filter = this.filter.bind(this);
+    this.fetchOne = this.fetchOne.bind(this);
+    this.handleChangeCondition = this.handleChangeCondition.bind(this);
+    this.handleChangeNewMedium = this.handleChangeNewMedium.bind(this);
+    this.handleResetMedia = this.handleResetMedia.bind(this);
   }
 
   componentDidMount() {
     this.fetch();
+
+    const header = document.getElementById('header');
+    const articles = document.getElementById('articles');
+    articles.addEventListener('scroll', function (e) {
+      header.style['margin-top'] = (-Math.min(articles.scrollTop / 2, header.clientHeight)) + 'px';
+    });
   }
 
-  componentDidUpdate() {
-    document.getElementById('articles').scrollTop = 0;
+  componentDidUpdate(prevProps, prevState) {
+    const { selected, condition, media } = this.state;
+    const saveRequired = selected !== prevState.selected || condition !== prevState.condition;
+    if (saveRequired || media !== prevState.media) {
+      document.getElementById('articles').scrollTop = 0;
+    }
+    if (saveRequired) {
+      const suffixes = selected.map((v, i) => v && candidates[i].suffix).filter(v => v);
+      saveSetting({ suffixes, condition });
+    }
   }
 
-  fetch() {
-    let articles = [];
-    async.each(media, (url, cb) => {
-      feednami.load(url).then(({ meta, entries }) => {
-        let { title: media_title, image: media_image } = meta;
-        media_image = media_image && media_image.url;
+  resetProgress(total = 0) {
+    document.getElementById('progress').style.width = total ? '0%' : '100%';
+    document.getElementById('progress').style.opacity = total ? '1' : '0';
+    this.setState({ progress: { current: 0, total } });
+  }
+
+  progress() {
+    this.setState((prevState) => {
+      const progress = { ...prevState.progress };
+      progress.current++;
+      const percent = progress.current / progress.total;
+      document.getElementById('progress').style.width = `${percent * 100}%`;
+      return { progress };
+    });
+  }
+
+  fetch(media = this.state.media) {
+    this.resetProgress(media.length);
+    async.each(media,
+      (medium, cb) => {
+        this.fetchOne(medium, () => {
+          this.progress();
+          cb(null);
+        })
+      }, () => {
+        this.resetProgress()
+      }
+    );
+  }
+
+  fetchOne([ name, url ], cb) {
+    const allKeywords = [];
+    candidates.forEach(({ keywords }) => allKeywords.push(...keywords));
+
+    feednami.load(url).then(({ meta, entries }) => {
+      let { image: media_image } = meta;
+      const media_title = name;
+      media_image = media_image && media_image.url;
+
+      this.setState((prevState) => {
+        const articles = [...prevState.articles];
         articles.push(...entries.map((article) => {
           let { author, link, summary, image, title, pubdate } = article;
+          if (!this.testKeywords(title, summary, allKeywords)) return null;
+
           const content = stripTags(summary);
           summary = content.text;
           image = image && image.url || content.image;
           pubdate = moment(pubdate);
+
           return {
             media_title,
             media_image,
@@ -52,36 +130,38 @@ class App extends React.Component {
             title,
             pubdate
           };
-        }));
-        articles = articles.sort((a, b) => a.pubdate.isBefore(b.pubdate));
-        this.setState({ articles });
-        cb(null);
-      })
+        }).filter(v => v));
+        return { articles: articles.sort((a, b) => a.pubdate.isBefore(b.pubdate) ? 1 : -1) };
+      });
+
+      cb(null);
     });
   }
 
+  testKeywords(title, summary, keywords) {
+    return keywords.some((keyword) => ~title.indexOf(keyword) || ~summary.indexOf(keyword));
+  }
+
   filter({ title, summary }) {
-    const testKeywords = (keywords) => {
-      return keywords.some((keyword) => ~title.indexOf(keyword) || ~summary.indexOf(keyword));
-    };
+    const selectedKeywordsList = this.state.selected.map((v, i) => {
+      return v && candidates[i].keywords;
+    }).filter(v => v);
+    if (!selectedKeywordsList.length) return false;
+    const method = { and: 'every', or: 'some' }[this.state.condition.operator];
+    const isSelectedIncluded = selectedKeywordsList[method](this.testKeywords.bind(null, title, summary));
 
     let isOthersIncluded = false;
-    if (this.state.condition_only) {
+    if (this.state.condition.only) {
       const bannedKeywordsList = this.state.selected.map((v, i) => {
         return !v && candidates[i].keywords;
       }).filter(v => v);
-      isOthersIncluded = bannedKeywordsList.some(testKeywords);
+      isOthersIncluded = bannedKeywordsList.some(this.testKeywords.bind(null, title, summary));
     }
 
-    const keywordsList = this.state.selected.map((v, i) => {
-      return v && candidates[i].keywords;
-    }).filter(v => v);
-    const method = this.state.condition_and ? 'every' : 'some';
-
-    return !isOthersIncluded && keywordsList[method](testKeywords);
+    return isSelectedIncluded && !isOthersIncluded;
   }
 
-  onCandidateSelected({ target }) {
+  handleSelectCandidate({ target }) {
     const { name, checked } = target;
     const i = name.split('_')[1];
     this.toggleCandidate(i, checked);
@@ -95,67 +175,122 @@ class App extends React.Component {
     });
   }
 
+  handleChangeNewMedium({ target }) {
+    const { name, value } = target;
+    this.setState((prevState) => ({
+      new_medium: {
+        ...prevState.new_medium,
+        [name]: value
+      }
+    }));
+  }
+
+  handleChangeCondition({ target }) {
+    const { name, value } = target;
+    this.setState((prevState) => ({
+      condition: {
+        ...prevState.condition,
+        [name]: value
+      }
+    }));
+  }
+
+  handleAddMedium() {
+    this.setState((prevState) => {
+      const media = [...prevState.media];
+      const { name, url } = prevState.new_medium;
+      if (!name || !url) return {};
+      media.unshift([name, url]);
+      this.fetch([media[0]]);
+      saveMedia(media);
+      return { media, new_medium: { name: '', url: '' } };
+    });
+  }
+
+  handleRemoveMedium(i) {
+    this.setState((prevState) => {
+      const media = [...prevState.media];
+      const [[ name ]] = media.splice(i, 1);
+      const articles = prevState.articles.filter(({ media_title }) => media_title !== name);
+      saveMedia(media);
+      return { media, articles };
+    });
+  }
+
+  handleResetMedia() {
+    resetMedia();
+    this.setState({ media: defaultMedia, articles: [] });
+    this.fetch(defaultMedia);
+  }
+
   render() {
-    const articles = this.state.articles.filter(this.filter.bind(this));
-    const articleCount = articles.length;
-    const candidateCount = this.state.selected.filter(v => v).length;
-    const and = this.state.condition_and;
-    const only = this.state.condition_only;
-    let resultMessage = `선택된 ${candidateCount}명`;
-    if (candidateCount === 1) {
-      resultMessage += '의 후보';
-      if (only) {
-        resultMessage += '만을';
-      } else {
-        resultMessage += '를';
-      }
-      resultMessage += ' 다루는';
-    } else {
-      resultMessage += and ? '의 후보 모두를 ' : ' 중 한명 이상의 후보를 ';
-      if (only && candidateCount < candidates.length) {
-        resultMessage += '다루고 이외의 후보는 다루지 않는';
-      } else {
-        resultMessage += '다루는';
-      }
-    }
-    resultMessage += ` 기사 (${articleCount}건)`;
+    const selectedArticles = this.state.articles.filter(this.filter);
+    const resultMessage = getResultMessage(selectedArticles, candidates, this.state.selected, this.state.condition);
 
     return <div className="container">
-      <div className="header">
+      <div id="header">
         <div className="bluehouse" />
         <span className="title-tertiary"><span>대한민국</span></span>
         <span className="title-secondary">제19대 대통령 선거</span>
         <span className="title-primary">후보 뉴스피드</span>
       </div>
-      <div className="content">
+
+      <div className="shadow">
+        <a className="copyright" href="https://www.youtube.com/watch?v=rJ1INwFKQGU" target="_blank">사진 - SBS대선토론 발췌</a>
+        <input type="checkbox" className="toggle-option" name="setup" id="setup"
+               checked={this.state.setup}
+               onChange={({ target }) => this.setState({ setup: target.checked })} />
+        <label htmlFor="setup" className="option">언론사 설정</label>
+      </div>
+
+      <div className={`media-container ${this.state.setup ? '' : 'hidden'}`}>
+        <div className="button" onClick={this.handleResetMedia}>
+          <span>초기화</span>
+        </div>
+        <div className="media">
+          <input type="text" className="name" placeholder="언론사" value={this.state.new_medium.name}
+                 name="name" onChange={this.handleChangeNewMedium} />
+          <input type="text" className="url" placeholder="RSS 주소" value={this.state.new_medium.url}
+                 name="url" onChange={this.handleChangeNewMedium} />
+          <span className="action-add" onClick={() => this.handleAddMedium()} />
+        </div>
+        {
+          this.state.media.map(([name, url], i) =>
+            <div className="media" key={i}>
+              <span className="name">{name}</span>
+              <span className="url">{url}</span>
+              <span className="action-remove" onClick={() => this.handleRemoveMedium(i)} />
+            </div>
+          )
+        }
+      </div>
+
+      <div className={`content ${this.state.setup ? 'hidden' : ''}`}>
         <div className="side-container">
           <div className="option-container">
-            <input type="radio" className="toggle-option" name="cond_and_or" id="cond_and"
-                   checked={this.state.condition_and}
-                   onChange={({ target }) => this.setState({ condition_and: true })} />
+            <input type="radio" className="toggle-option" name="operator" value="and" id="cond_and"
+                   checked={this.state.condition.operator === 'and'}
+                   onChange={this.handleChangeCondition} />
             <label htmlFor="cond_and" className="option">AND</label>
-            <input type="radio" className="toggle-option" name="cond_and_or" id="cond_or"
-                   checked={!this.state.condition_and}
-                   onChange={({ target }) => this.setState({ condition_and: false })} />
+
+            <input type="radio" className="toggle-option" name="operator" value="or" id="cond_or"
+                   checked={this.state.condition.operator === 'or'}
+                   onChange={this.handleChangeCondition} />
             <label htmlFor="cond_or" className="option">OR</label>
-            <input type="checkbox" className="toggle-option" name="cond_only" id="cond_only"
-                   checked={this.state.condition_only}
-                   onChange={({ target }) => this.setState({ condition_only: target.checked })} />
+
+            <input type="checkbox" className="toggle-option" id="cond_only"
+                   checked={this.state.condition.only}
+                   onChange={({ target }) => this.handleChangeCondition({
+                     target: { name: 'only', value: target.checked }
+                   })} />
             <label htmlFor="cond_only" className="option">ONLY</label>
           </div>
           <div className="candidate-container">
             {
-              candidates.map(({ suffix, name, party }, i) => [
-                <input type="checkbox" className="toggle-candidate" id={`toggle_${i}`} name={`candidate_${i}`}
-                       onChange={this.onCandidateSelected} checked={this.state.selected[i]} />,
-                <label className={`candidate candidate-${suffix}`} htmlFor={`toggle_${i}`}>
-                  <div className="picture" />
-                  <div className="description">
-                    <span className="party">{party}</span>
-                    <span className="name">{name}</span>
-                  </div>
-                </label>
-              ])
+              candidates.map((candidate, i) =>
+                <Candidate {...candidate} key={i} handleChange={this.handleSelectCandidate}
+                           checked={this.state.selected[i]} {...{ i }} />
+              )
             }
           </div>
         </div>
@@ -163,8 +298,8 @@ class App extends React.Component {
           <div className="bar-container">
             {
               candidates.map(({ suffix, name }, i) =>
-                this.state.selected[i] &&
-                <div className={`bar bar-${suffix}`} key={i} onClick={() => this.toggleCandidate(i, false)}>
+                <div className={`bar bar-${suffix} ${this.state.selected[i] ? 'bar-selected' : ''}`} key={i}
+                     onClick={() => this.toggleCandidate(i, false)}>
                   {name}
                 </div>
               )
@@ -175,21 +310,11 @@ class App extends React.Component {
               {resultMessage}
             </div>
             {
-              articles.map(({ media_title, media_image, author, link, summary, image, title, pubdate }, i) =>
-                <a className="article" key={i} href={link} target="_blank">
-                  <div className={`picture ${image ? '' : 'picture-default'}`}
-                       style={image && { backgroundImage: `url(${image})` }} />
-                  <div className="description">
-                    <h2 className="title">{title}</h2>
-                    <p className="summary" dangerouslySetInnerHTML={{ __html: summary }} />
-                    <div className="minor">
-                      <span
-                        className="author">{media_title == author || !author ? media_title : `${media_title} - ${author}`}</span>
-                      <span className="pubdate">{pubdate.calendar()}</span>
-                    </div>
-                  </div>
-                </a>
-              )
+              selectedArticles.length ?
+                selectedArticles.map((article, i) =>
+                  <Article {...article} key={i} />
+                ) :
+                <Countdown progress={this.state.progress} />
             }
           </div>
         </div>

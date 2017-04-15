@@ -3,10 +3,15 @@ $color-ahn: #036242
 $color-moon: #055AAB
 $color-hong: #C9151E
 $color-yoo: #00B3EB
-$bar-height: 2em
+
 $primary-color: #435E9B
 $light-color: #5B73A8
-$dark-color: #2B3C62
+$dark-color: #314571
+$darker-color: #2B3C62
+
+$bar-height: 2em
+$card-margin: 2em
+$card-padding: 2em
 
 @font-face
   font-family: NotoSansKR
@@ -21,6 +26,9 @@ html, body
 body
   font-family: NotoSansKR, serif
 
+a
+  text-decoration: none
+
 #root
   display: flex
   width: 100%
@@ -34,20 +42,20 @@ body
   width: 100%
   height: 100%
 
-.header
+#header
   background-color: $primary-color
   display: flex
   flex-direction: column
   align-items: center
   padding: 2em
   color: white
-  border-bottom: $bar-height solid #314571
-  box-shadow: (inset 0 -1px $dark-color, inset 0 -2px $light-color)
+  box-shadow: (inset 0 -1px $darker-color, inset 0 -2px $light-color)
+  flex-shrink: 0
 
   .bluehouse
     margin-top: .5em
     width: 100%
-    height: 5em
+    height: 2em
     background: url(../img/bluehouse.png) no-repeat center
     background-size: contain
 
@@ -65,7 +73,7 @@ body
     z-index: 1
 
     &:before
-      border-top: 1px solid #dfdfdf
+      border-top: 1px solid white
       content: ''
       margin: 0 auto
       position: absolute
@@ -80,27 +88,55 @@ body
       padding: 0 0 0 .5em
       letter-spacing: .5em
 
+.shadow
+  display: flex
+  flex-shrink: 0
+  height: $bar-height
+  background: $dark-color
+  justify-content: space-between
+  z-index: 1
+
+  .option
+    flex: 0 1 auto
+    padding: 0 1em
+
+  .copyright
+    line-height: $bar-height
+    padding: 0 1em
+    color: rgba(255, 255, 255, .5)
+
 .content
   display: flex
   width: 100%
   height: 100%
+  z-index: 1
+  min-height: 0
 
 .side-container
   flex: 1
   display: flex
   flex-direction: column
+  align-items: stretch
   max-width: 20em
+
+@mixin name-shadow
+  color: white
+  text-shadow: 0 0 8px rgba(0, 0, 0, .5)
 
 .candidate-container
   display: flex
   flex-direction: column
-  width: 100%
-  height: 100%
+  flex: 1
+
+  .candidate-wrapper
+    flex: 1
+    display: flex
+    align-items: stretch
 
   .candidate
     flex: 1
     display: flex
-    align-items: center
+    align-items: stretch
     justify-content: space-between
     padding-left: 5%
     padding-right: 10%
@@ -112,18 +148,18 @@ body
       filter: grayscale(80%)
 
     .picture
-      height: 100%
       background: no-repeat left bottom
       background-size: auto 95%
 
     .description
       display: flex
       flex-direction: column
+      justify-content: center
       align-items: flex-end
+      @include name-shadow
 
       .name
         font-size: 2em
-        color: black
 
   .toggle-candidate
     display: none
@@ -172,42 +208,46 @@ body
       background-image: url(../img/candidate/yoo.png)
 
 .main-container
+  display: flex
   flex: 2
   flex-direction: column
 
 .option-container
-  margin-top: -$bar-height
   height: $bar-height
   display: flex
   align-items: stretch
+  background: $dark-color
 
-  .toggle-option
-    display: none
+.toggle-option
+  display: none
 
-    &:checked + .option
-      background: $light-color
-      color: white
+  &:checked + .option
+    background: $light-color
+    color: white
 
-  .option
-    flex: 1
-    padding: 0 1em
-    color: black
-    line-height: $bar-height
-    text-align: center
-    margin-top: -1px
-    cursor: pointer
+.option
+  flex: 1
+  color: rgba(255, 255, 255, .5)
+  line-height: $bar-height
+  text-align: center
+  cursor: pointer
 
 .bar-container
-  margin-top: -$bar-height
   height: $bar-height
   display: flex
   align-items: stretch
+  background: $dark-color
 
   .bar
     flex: 1
     line-height: $bar-height
     text-align: center
     cursor: pointer
+    display: none
+    @include name-shadow
+
+  .bar-selected
+    display: block
 
   .bar-sim
     background-color: $color-sim
@@ -225,32 +265,57 @@ body
     background-color: $color-yoo
 
 .result-message
-  height: $bar-height
-  line-height: $bar-height
+  flex-shrink: 0
+  box-sizing: border-box
+  padding: .5em
   width: 100%
   background: grey
   text-align: center
   color: white
+  word-break: keep-all
 
-.article-container
+.card-container
   flex: 1
   height: 100%
   display: flex
   flex-direction: column
   overflow-y: scroll
+  background-color: #E2E1E0
 
-  $article-padding: 2em
-
-  .article
+  .card
     display: flex
     align-content: stretch
-    margin: $article-padding $article-padding 0
+    margin: $card-margin $card-margin 0
+    padding: $card-padding
     flex-shrink: 0
-    text-decoration: none
     color: black
+    background-color: white
+    border-radius: 2px
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .12), 0 1px 2px rgba(0, 0, 0, .24)
+    transition: all 0.3s cubic-bezier(.25, .8, .25, 1)
+
+    &:hover
+      box-shadow: 0 3px 6px rgba(0, 0, 0, .16), 0 3px 6px rgba(0, 0, 0, .23)
 
     &:last-child
-      padding-bottom: $article-padding
+      margin-bottom: $card-margin
+
+.article-container
+  @extend .card-container
+
+  .countdown
+    @extend .card
+    justify-content: center
+    text-align: center
+    word-break: keep-all
+    display: flex
+    flex-direction: column
+
+    .timer
+      font-size: 2em
+
+  .article
+    @extend .card
 
     .picture
       flex: 1
@@ -258,7 +323,6 @@ body
       background-size: contain
 
     .picture-default
-      background-size: 40%
       background-image: url(../img/no-image.png)
 
     .description
@@ -285,5 +349,115 @@ body
         .author
           margin-right: 1em
 
-.github-corner
-  color: white
+.hidden
+  display: none
+
+#progress
+  position: absolute
+  height: 4px
+  background: white
+  opacity: .8
+  top: 0
+  transition: .5s ease-in-out
+
+.media-container
+  @extend .card-container
+
+  .button
+    @extend .card
+    padding: 1em
+    max-width: 4em
+    display: flex
+    justify-content: center
+    background: $light-color
+    color: white
+    cursor: pointer
+
+  .media
+    @extend .card
+    padding: 1.5em
+
+    input
+      border: none
+      outline: none
+      font-size: 1em
+      min-width: 5em
+
+    .name
+      flex: 1
+      white-space: nowrap
+      margin-right: 1em
+
+    .url
+      flex: 4
+      margin-right: 1em
+      word-break: break-all
+
+    .action
+      margin: -.5em
+      font-size: 2em
+      width: 2em
+      height: 2em
+      line-height: 2em
+      text-align: center
+      cursor: pointer
+
+    .action-add
+      @extend .action
+      color: green
+
+      &:before
+        content: '+'
+
+    .action-remove
+      @extend .action
+      color: red
+
+      &:before
+        content: '-'
+
+@media (max-width: 768px)
+  .candidate-container
+    .candidate
+      .picture
+        background-position: center bottom
+
+      .description
+        display: none
+
+  .main-container
+    flex: 4
+
+@media (max-width: 512px)
+  .content
+    flex-direction: column
+
+  .side-container
+    flex-direction: column
+    max-width: none
+    min-height: 10em
+
+  .candidate-container
+    flex-direction: row
+
+    .candidate
+      padding: 0
+
+      .picture
+        background-size: cover
+
+  .bar-container
+    .bar
+      display: block
+      filter: grayscale(100%)
+
+    .bar-selected
+      filter: grayscale(0%)
+
+  .card
+    margin-left: 0
+    margin-right: 0
+
+  .media-container
+    .button
+      max-width: none

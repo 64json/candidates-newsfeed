@@ -1,6 +1,6 @@
 import { shuffle } from '../utils.js';
 
-module.exports = shuffle([
+export default shuffle([
   {
     suffix: 'sim',
     name: '심상정',
