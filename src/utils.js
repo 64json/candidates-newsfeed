@@ -49,7 +49,7 @@ export const getResultMessage = (selectedArticles, candidates, selected, conditi
   const candidateCount = candidates.length;
   const articleCount = selectedArticles.length;
 
-  if (selectedCount === 0) return '좌측에서 후보를 선택해주세요.';
+  if (selectedCount === 0) return '후보를 선택해주세요.';
 
   let resultMessage = `선택된 ${selectedCount}명`;
   if (selectedCount === 1) {

@@ -62,9 +62,10 @@ class App extends React.Component {
     this.fetch();
 
     const header = document.getElementById('header');
+    const shadow = document.getElementById('shadow');
     const articles = document.getElementById('articles');
     articles.addEventListener('scroll', function (e) {
-      header.style['margin-top'] = (-Math.min(articles.scrollTop, header.clientHeight)) + 'px';
+      header.style['margin-top'] = (-Math.min(articles.scrollTop, header.clientHeight + shadow.clientHeight)) + 'px';
     });
   }
 
@@ -255,7 +256,7 @@ class App extends React.Component {
         <span className="title-primary">후보 뉴스피드</span>
       </div>
 
-      <div className="shadow">
+      <div id="shadow">
         <a className="copyright" href="https://www.youtube.com/watch?v=rJ1INwFKQGU" target="_blank">사진 - SBS대선토론 발췌</a>
         <input type="checkbox" className="toggle-option" name="setup" id="setup"
                checked={this.state.setup}
