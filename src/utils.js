@@ -1,8 +1,5 @@
 import Cookies from 'cookies-js';
-import FeedParser from 'feedparser';
-import hyperquest from 'hyperquest';
-import iconv from 'iconv-lite';
-import { Readable } from 'stream';
+import request from 'browser-request';
 
 export const shuffle = (array) => {
   const randomized = [];
@@ -17,8 +14,8 @@ export const stripTags = (html) => {
   div.innerHTML = html;
   const imgs = div.getElementsByTagName('img');
   const image = imgs[0] && imgs[0].src;
-  const text = (div.textContent || div.innerText || '').replace(/\s+/g, ' ').trim();
-  return { image, text };
+  const summary = (div.textContent || div.innerText || '').replace(/\s+/g, ' ').trim();
+  return { image, summary };
 };
 
 const mediaKey = 'media';
@@ -73,40 +70,12 @@ export const getResultMessage = (selectedArticles, candidates, selected, conditi
 };
 
 export const fetchRSS = (url, encoding = 'utf-8', fixEncoding, cb) => {
-  const feedparser = new FeedParser();
-
-  const req = hyperquest(url);
-  req.on('error', cb);
-  if (encoding === 'utf-8') {
-    req.pipe(feedparser);
-  } else {
-    let xml = '';
-    req.on('data', (chunk) => {
-      xml += iconv.decode(chunk, encoding);
-    });
-    req.on('end', () => {
-      const readable = new Readable();
-      readable.push(xml);
-      readable.push(null);
-      readable.pipe(feedparser);
-    });
-  }
-
-  const entries = [];
-  feedparser.on('error', cb);
-  feedparser.on('readable', () => {
-    let entry;
-    while (entry = feedparser.read()) {
-      entries.push(entry);
-    }
-  });
-  feedparser.on('end', () => {
-    const { meta } = feedparser;
-    const parsedEncoding = meta['#xml'].encoding || 'utf-8';
-    if (encoding !== parsedEncoding) {
-      fixEncoding(url, parsedEncoding);
-      return fetchRSS(url, parsedEncoding, fixEncoding, cb);
-    }
-    cb(null, entries);
+  const query = `SELECT * FROM xml WHERE url = '${url}'`;
+  request({
+    url: `https://query.yahooapis.com/v1/public/yql?q=${encodeURI(query)}&format=json&alltableswithkeys`,
+    json: true
+  }, (err, res, body) => {
+    if (err) return cb(err);
+    cb(err, body.query.results.rss.channel.item);
   });
 };

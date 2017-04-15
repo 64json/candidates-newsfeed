@@ -5,7 +5,6 @@ const Candidate = ({ suffix, name, party, handleChange, checked, i }) => (
     <input type="checkbox" className="toggle-candidate" id={`toggle_${i}`} name={`candidate_${i}`}
            onChange={handleChange} checked={checked} />
     <label className={`candidate candidate-${suffix}`} htmlFor={`toggle_${i}`}>
-      <div className="picture" />
       <div className="description">
         <span className="party">{party}</span>
         <span className="name">{name}</span>

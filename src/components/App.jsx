@@ -65,7 +65,9 @@ class App extends React.Component {
     const shadow = document.getElementById('shadow');
     const articles = document.getElementById('articles');
     articles.addEventListener('scroll', function (e) {
-      header.style['margin-top'] = (-Math.min(articles.scrollTop, header.clientHeight + shadow.clientHeight)) + 'px';
+      const amount = Math.min(articles.scrollTop, header.clientHeight + shadow.clientHeight);
+      header.style['margin-top'] = (-amount) + 'px';
+      articles.style['padding-top'] = amount + 'px';
     });
   }
 
@@ -123,11 +125,10 @@ class App extends React.Component {
       this.setState((prevState) => {
         const articles = [...prevState.articles];
         articles.push(...entries.map((article) => {
-          let { author, link, summary, image, title, pubdate } = article;
+          let { author, link, encoded, description, title, pubdate, thumbnail, content } = article;
 
-          const content = stripTags(summary);
-          summary = content.text;
-          image = image && image.url || content.image;
+          let { summary, image } = stripTags(encoded || description);
+          image = image || (thumbnail && thumbnail.url) || (content && content.url);
           pubdate = moment(pubdate);
 
           if (!this.testKeywords(title, summary, allKeywords)) return null;

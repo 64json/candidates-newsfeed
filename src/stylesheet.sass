@@ -111,13 +111,13 @@ a
   height: 100%
   z-index: 1
   min-height: 0
-  flex-shrink: 0
 
 .side-container
   flex: 1
   display: flex
   flex-direction: column
   align-items: stretch
+  min-width: 10em
   max-width: 20em
 
 @mixin name-shadow
@@ -134,23 +134,37 @@ a
     display: flex
     align-items: stretch
 
+  .candidate-sim
+    background: $color-sim url(../img/candidate/sim.png)
+
+  .candidate-ahn
+    background: $color-ahn url(../img/candidate/ahn.png)
+
+  .candidate-moon
+    background: $color-moon url(../img/candidate/moon.png)
+
+  .candidate-hong
+    background: $color-hong url(../img/candidate/hong.png)
+
+  .candidate-yoo
+    background: $color-yoo url(../img/candidate/yoo.png)
+
   .candidate
     flex: 1
     display: flex
     align-items: stretch
-    justify-content: space-between
+    justify-content: flex-end
     padding-left: 5%
     padding-right: 10%
     cursor: pointer
     filter: grayscale(100%)
     transition: filter .2s ease-in-out
+    background-repeat: no-repeat
+    background-position: 10% bottom
+    background-size: auto 95%
 
     &:hover
       filter: grayscale(80%)
-
-    .picture
-      background: no-repeat left bottom
-      background-size: auto 95%
 
     .description
       display: flex
@@ -167,46 +181,6 @@ a
 
     &:checked + .candidate
       filter: none
-
-  .candidate-sim
-    background-color: $color-sim
-
-    .picture
-      flex: 1
-      display: flex
-      background-image: url(../img/candidate/sim.png)
-
-  .candidate-ahn
-    background-color: $color-ahn
-
-    .picture
-      flex: 1
-      display: flex
-      background-image: url(../img/candidate/ahn.png)
-
-  .candidate-moon
-    background-color: $color-moon
-
-    .picture
-      flex: 1
-      display: flex
-      background-image: url(../img/candidate/moon.png)
-
-  .candidate-hong
-    background-color: $color-hong
-
-    .picture
-      flex: 1
-      display: flex
-      background-image: url(../img/candidate/hong.png)
-
-  .candidate-yoo
-    background-color: $color-yoo
-
-    .picture
-      flex: 1
-      display: flex
-      background-image: url(../img/candidate/yoo.png)
 
 .main-container
   display: flex
@@ -421,9 +395,7 @@ a
   .candidate-container
     .candidate
       padding: 0
-
-      .picture
-        background-position: center bottom
+      background-position: center bottom
 
       .description
         display: none
@@ -434,19 +406,19 @@ a
 @media (max-width: 512px)
   .content
     flex-direction: column
+    flex-shrink: 0
 
   .side-container
     flex-direction: column
     max-width: none
-    min-height: 8em
+    max-height: 8em
 
   .candidate-container
     flex-direction: row
 
     .candidate
-      .picture
-        background-size: cover
-        background-position: center top
+      background-size: cover
+      background-position: center top
 
   .bar-container
     .bar
