@@ -18,8 +18,6 @@ import Article from './Article.jsx';
 import Candidate from './Candidate.jsx';
 import Countdown from './Countdown.jsx';
 
-moment.locale('ko');
-
 class App extends React.Component {
   constructor(props) {
     super(props);
@@ -125,11 +123,15 @@ class App extends React.Component {
       this.setState((prevState) => {
         const articles = [...prevState.articles];
         articles.push(...entries.map((article) => {
-          let { author, link, encoded, description, title, pubdate, thumbnail, content } = article;
+          let { author, link, encoded, description, title, pubDate, date, thumbnail, content } = article;
 
           let { summary, image } = stripTags(encoded || description);
           image = image || (thumbnail && thumbnail.url) || (content && content.url);
-          pubdate = moment(pubdate);
+          pubDate = moment(pubDate || date, [
+            moment.ISO_8601,
+            'ddd, DD MMM YYYY HH:mm:ss ZZ',
+            'YYYY.MM.DD',
+          ]);
 
           if (!this.testKeywords(title, summary, allKeywords)) return null;
 
@@ -140,10 +142,10 @@ class App extends React.Component {
             summary,
             image,
             title,
-            pubdate
+            pubDate
           };
         }).filter(v => v));
-        return { articles: articles.sort((a, b) => a.pubdate.isBefore(b.pubdate) ? 1 : -1) };
+        return { articles: articles.sort((a, b) => a.pubDate.isBefore(b.pubDate) ? 1 : -1) };
       });
 
       cb(null);
