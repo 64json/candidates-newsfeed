@@ -35,7 +35,6 @@ class Countdown extends React.Component {
     const hour = sec % 86400 / 3600 | 0;
     const minute = sec % 3600 / 60 | 0;
     const second = sec % 60 | 0;
-    console.log(this.props.progress);
     return <div className="countdown">
       <span>{this.props.progress.total ? '기사를 검색중입니다.' : '조건에 맞는 기사가 없습니다.'}</span>
       <span className="timer">대선까지 {`${day}일 ${hour}시간 ${minute}분 ${second}초`}</span>
