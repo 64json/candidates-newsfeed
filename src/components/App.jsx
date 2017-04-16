@@ -53,7 +53,6 @@ class App extends React.Component {
     this.handleChangeCondition = this.handleChangeCondition.bind(this);
     this.handleChangeNewMedium = this.handleChangeNewMedium.bind(this);
     this.handleResetMedia = this.handleResetMedia.bind(this);
-    this.fixMediumEncoding = this.fixMediumEncoding.bind(this);
   }
 
   componentDidMount() {
@@ -111,11 +110,11 @@ class App extends React.Component {
     );
   }
 
-  fetchOne({ name, url, encoding }, cb) {
+  fetchOne({ name, url }, cb) {
     const allKeywords = [];
     candidates.forEach(({ keywords }) => allKeywords.push(...keywords));
 
-    fetchRSS(url, encoding, this.fixMediumEncoding, (err, entries) => {
+    fetchRSS(url, (err, entries) => {
       if (err) return cb(err);
 
       const media_title = name;
@@ -235,16 +234,6 @@ class App extends React.Component {
     resetMedia();
     this.setState({ media: defaultMedia, articles: [] });
     this.fetch(defaultMedia);
-  }
-
-  fixMediumEncoding(url, encoding) {
-    this.setState((prevState) => {
-      const media = [...prevState.media];
-      const medium = media.find(v => v.url === url);
-      medium.encoding = encoding;
-      saveMedia(media);
-      return { media };
-    });
   }
 
   render() {

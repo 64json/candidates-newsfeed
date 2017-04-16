@@ -69,7 +69,7 @@ export const getResultMessage = (selectedArticles, candidates, selected, conditi
   return resultMessage;
 };
 
-export const fetchRSS = (url, encoding = 'utf-8', fixEncoding, cb) => {
+export const fetchRSS = (url, cb) => {
   const query = `SELECT * FROM xml WHERE url = '${url}'`;
   request({
     url: `https://query.yahooapis.com/v1/public/yql?q=${encodeURI(query)}&format=json&alltableswithkeys`,
